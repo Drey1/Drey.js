@@ -13,56 +13,81 @@ $$$$$$$  |$$ |      \$$$$$$$\ \$$$$$$$ |      $$\   $$ |$$$$$$$  |
                                \______/        \______/           
 */
 
+//?ver2
+
 export const ready = (action) => window.addEventListener("load", action);
 
-export const $ = (selector) => document.querySelector(selector);
+export const $ = (selector) => typeof (selector) === "string" ? document.querySelector(selector) : selector;
+
+export const $$ = (selector) => document.querySelectorAll(selector);
+
+export const forEach = (selector, action) => typeof (selector) === "string" ? $$(selector).forEach(action) : selector.forEach(action);
 
 export const html = (selector, content) => $(selector).innerHTML = content;
 
+export const move = (element, destination) => $(destination).appendChild($(element));
+
 export const append = (selector, content) => $(selector).append(content);
 
-export const css = (selector, css, val) => $(selector).setAttribute("style", `${css}:${val}`);
+export const remove = (selector) => { if ($(selector)) $(selector).remove() }
 
-export const addClass = (selector, newclass) => {
-    if (!hasClass(selector, newclass)) $(selector).classList.add(newclass);
-}
+export const removeChilds = (selector) => { while ($(selector).firstChild) $(selector).removeChild($(selector).firstChild) }
 
-export const removeClass = (selector, targetclass) => {
-    if (hasClass(selector, targetclass)) $(selector).classList.remove(targetclass);
-}
+export const createElement = (element) => document.createElement(element);
+
+export const css = (selector, css, val) => $(selector).style.setProperty(css, val);
+
+export const addClass = (selector, newClass) => { if (!hasClass(selector, newClass)) $(selector).className += ` ${newClass}` }
+
+export const removeClass = (selector, targetclass) => forEach(targetclass.split(" "), (target) => { if (hasClass(selector, target)) $(selector).classList.remove(target) });
 
 export const ifClass = (selector, targetclass, condition) => $(selector).classList.toggle(targetclass, condition);
 
 export const hasClass = (selector, targetclass) => $(selector).classList.contains(targetclass);
 
-export const replaceClass = (selector, targetClass, replaceclass) => {
-    if (hasClass(selector, targetclass)) $(selector).classList.replace(targetClass, replaceclass);
-}
+export const replaceClass = (selector, targetClass, replaceclass) => { if (hasClass(selector, targetClass)) $(selector).classList.replace(targetClass, replaceclass) }
 
 export const attr = (selector, name, value = "") => $(selector).setAttribute(name, value);
 
-export const removeAttr = (selector, name) => {
-    if ($(selector).hasAttribute(name)) $(selector).removeAttribute(name);
-}
+export const removeAttr = (selector, name) => forEach(name.split(" "), (target) => { if (hasAttr(selector, target)) $(selector).removeAttribute(target) });
 
 export const hasAttr = (selector, name) => $(selector).hasAttribute(name);
 
-export const event = (selector, event, action, callback = null, capture = false) => {
+export const event = (selector, event, action = null, callback = null, once = false) => {
+    let eventAction, eventCallback;
+
     if (event === "hover") {
-        $(selector).addEventListener("mouseover", action, capture);
-        $(selector).addEventListener("mouseleave", callback, capture);
+        if (once) {
+            eventAction = () => { $(selector).removeEventListener("mouseover", eventAction, false); (action)() }
+            eventCallback = () => { $(selector).removeEventListener("mouseleave", eventCallback, false); (callback)() }
+        } else {
+            eventAction = action;
+            eventCallback = callback;
+        }
+
+        $(selector).addEventListener("mouseover", eventAction, false);
+        $(selector).addEventListener("mouseleave", eventCallback, false);
     } else {
-        $(selector).addEventListener(event, action, capture);
+        once
+            ? eventAction = () => { $(selector).removeEventListener(event, eventAction, false); (action)() }
+            : eventAction = action;
+
+        $(selector).addEventListener(event, eventAction, false);
     }
 }
 
-export const removeEvent = (selector, event, action, capture = false) => {
+export const removeEvent = (selector, event, action, callback = null) => {
     if (event === "hover") {
-        $(selector).removeEventListener("mouseover", action, capture);
-        $(selector).removeEventListener("mouseleave", callback, capture);
+        $(selector).removeEventListener("mouseover", action, false);
+        $(selector).removeEventListener("mouseleave", callback, false);
     } else {
-        $(selector).removeEventListener(event, action, capture);
+        $(selector).removeEventListener(event, action, false);
     }
+}
+
+export const resetEvents = (callback = null) => {
+    forEach(document.querySelectorAll('*'), (element) => element.parentNode.replaceChild(element.cloneNode(true), element));
+    if (callback != null) (callback)();
 }
 
 export const post = (url, data, json = true) => {
@@ -101,7 +126,7 @@ export const checkUndefined = (input) => input === undefined ? false : true;
 
 export const script = (selector, code, name = null) => {
     const loadScript = (src) => new Promise((resolve, reject) => {
-        let script = document.createElement('script');
+        let script = createElement('script');
         script.src = src;
         script.type = "module";
         if (name != null) script.id = name;
@@ -119,11 +144,13 @@ export const page = (page, noreturn = false, blank = false) => {
     }
 }
 
+export const url = (string) => history.pushState(null, string, string);
+
+export const title = (string) => document.title = string;
+
 export const reload = (force = false) => force ? location.reload(true) : location.reload();
 
 export const resizeWindow = (action) => window.onresize = action;
-
-export const title = (string) => document.title = string;
 
 export const delay = (time, action) => setTimeout(action, time);
 
@@ -131,17 +158,37 @@ export const hasVerticalScroll = () => {
     const body = document.body;
     const html = document.documentElement;
     const fullHeight = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight);
-
     return fullHeight > window.innerHeight;
 }
 
-export const remove = (target) => $(target).remove();
+export const focus = (selector) => { if ($(selector)) $(selector).focus() }
+
+export const unfocus = (selector) => { if ($(selector)) $(selector).blur() }
+
+export const hasFocus = (selector) => $(selector) === document.activeElement;
 
 export const download = (name, url) => {
     let link = document.createElement('a');
     link.href = url;
     link.download = name;
     link.click();
+}
+
+export const setStorage = (selector, value) => localStorage.setItem(selector, value);
+
+export const getStorage = (selector) => localStorage.getItem(selector);
+
+export const removeStorage = (selector) => localStorage.removeItem(selector);
+
+export const firstCapitalLetter = (string) => string.charAt(0).toUpperCase() + string.slice(1);
+
+/* chrome - firefox - opera - MSIE */
+export const browser = (browser) => navigator.userAgent.toLowerCase().indexOf(browser) > -1;
+
+export const clipboard = (string) => {
+    if (navigator && navigator.clipboard && navigator.clipboard.writeText)
+        return navigator.clipboard.writeText(string);
+    return Promise.reject("The Clipboard API is not available.");
 }
 
 export const error = (error) => {
@@ -155,64 +202,64 @@ export const alertError = () => {
     });
 }
 
-/* chrome - firefox - opera - MSIE */
-export const browser = (browser) =>  navigator.userAgent.toLowerCase().indexOf(browser) > -1;
+/* const data = await getData("example.json"); */
+export async function getData(jsonUrl) {
+    return new Promise(resolve => {
+        fetch(`./data/${jsonUrl}?ver1`, { 'Content-Type': 'application/json' })
+            .then(res => res.text())
+            .then(datos => {
+                resolve(JSON.parse(datos));
+            }).catch(error => {
+                alert(error);
+            });
+    });
+}
 
 export const dialog = (idName = "", titleDialog = "", buttonDialog = "OK", contentDialog = "<br>", escape = true, callback = () => { }) => {
 
     const closeDialog = (dialog) => {
-        dialog.removeAttribute("style");
-        dialog.style.setProperty('--animate-duration', '0.2s');
-        if (dialog.classList.contains("animate__fadeIn")) dialog.classList.remove("animate__fadeIn");
-        if (!dialog.classList.contains("animate__fadeOut")) dialog.classList.add("animate__fadeOut");
+        removeAttr(dialog, "style");
+        css(dialog, '--animate-duration', '0.2s');
+        removeClass(dialog, "animate__fadeIn");
+        addClass(dialog, "animate__fadeOut");
 
-        dialog.addEventListener("animationend", () => {
-            dialog.remove();
-            (callback)();
-        });
+        event(dialog, "animationend", () => remove(dialog));
     }
 
-    const dialog = document.createElement("dialog");
-
+    const dialog = createElement("dialog");
     const content = `
         <h1>${titleDialog}</h1>
         ${contentDialog}
         <button id="button${idName}">${buttonDialog}</button>
     `;
+    html(dialog, content);
 
-    dialog.innerHTML = content;
+    css(dialog, '--animate-duration', '0.3s');
+    css(dialog, 'display', 'none');
+    addClass(dialog, "animate__animated animate__fadeIn");
+    attr(dialog, "id", idName);
+    append("body", dialog);
 
-    dialog.style.setProperty('--animate-duration', '0.3s');
-    dialog.className = "animate__animated animate__fadeIn";
-    dialog.setAttribute("id", idName);
-
-    $("body").appendChild(dialog);
-
-    dialog.addEventListener("close", () => {
-        closeDialog(dialog);
+    event(dialog, "close", () => {
+        remove(dialog);
         (callback)();
-        dialog.remove();
     });
 
-    $(`#button${idName}`).addEventListener("click", () => {
-        closeDialog(dialog);
+    event(`#button${idName}`, "click", () => closeDialog(dialog));
+
+    if (!escape) event(`dialog#${idName}`, 'cancel', (event) => event.preventDefault());
+
+    delay(30, () => {
+        css(dialog, 'display', 'grid');
+        $(dialog).showModal();
+        unfocus(`#button${idName}`);
     });
-
-    if (!escape) $(`dialog#${idName}`).addEventListener('cancel', (event) => event.preventDefault());
-
-    $(`dialog#${idName}`).showModal();
-    $(`#button${idName}`).blur();
 }
-
-export const clipboard = (string) => {
-    if (navigator && navigator.clipboard && navigator.clipboard.writeText)
-        return navigator.clipboard.writeText(string);
-    return Promise.reject("The Clipboard API is not available.");
-}
-
-export const move = (element, destination) =>  $(destination).appendChild($(element));
 
 /**
+ * <
+ * <
+ * <
  * Validate Function - https://regexr.com/
  * @param {string} value
  * @param {string} type

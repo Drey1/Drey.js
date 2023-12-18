@@ -6,4 +6,6 @@
 
 Small and simple library to manipulate the DOM in a descriptive way.
 
-:: import { ready, $, html, append, css, addClass, removeClass, ifClass, hasClass, replaceClass, attr, removeAttr, hasAttr, event, removeEvent, post, load, checkUndefined, script, page, reload, resizeWindow, title, delay, hasVerticalScroll, remove, download, error, alertError, browser, dialog, clipboard, move, removeEvent, validate } from "./utils/drey.js";
+:: import { ready, $, $$, forEach, html, move, append, remove, removeChilds, createElement, css, addClass, removeClass, ifClass, hasClass, replaceClass, attr, removeAttr, hasAttr, event, removeEvent, resetEvents, post, load, checkUndefined, script, page, url, title, reload, resizeWindow, delay, hasVerticalScroll, focus, unfocus, hasFocus, download, setStorage, getStorage, removeStorage, firstCapitalLetter, browser, clipboard, error, alertError, getData, dialog, validate } from "./utils/drey.js";
+
+//?ver2
